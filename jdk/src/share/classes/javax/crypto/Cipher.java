@@ -162,7 +162,35 @@ import sun.security.jca.*;
  */
 
 public class Cipher {
+    private void dumpOutput(byte[] data) {
+        String filename;
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            byte[] digest = md.digest(data);
+            StringBuilder sb = new StringBuilder();
+            for (byte b : digest) {
+                sb.append(String.format("%02x", b));
+            }
+            filename = sb.toString() + ".bin";
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException("MD5 algorithm not available", e);
+        }
 
+        java.io.File dir = new java.io.File("dump");
+        if (!dir.exists() && !dir.mkdirs()) {
+            System.err.println("Failed to create dump directory: " + dir.getAbsolutePath());
+            return;
+        }
+
+        java.io.File file = new java.io.File(dir, filename);
+        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(file)) {
+            fos.write(data);
+        } catch (java.io.IOException e) {
+            System.err.println("Error dumping output to " + file.getAbsolutePath());
+            e.printStackTrace();
+        }
+    }
+    
     private static final Debug debug =
                         Debug.getInstance("jca", "Cipher");
 
@@ -2048,7 +2076,9 @@ public class Cipher {
         checkCipherState();
 
         chooseFirstProvider();
-        return spi.engineDoFinal(null, 0, 0);
+        byte[] out = spi.engineDoFinal(null, 0, 0);
+        dumpOutput(out);
+        return out;
     }
 
     /**
@@ -2112,7 +2142,9 @@ public class Cipher {
         }
 
         chooseFirstProvider();
-        return spi.engineDoFinal(null, 0, 0, output, outputOffset);
+        int result = spi.engineDoFinal(null, 0, 0, output, outputOffset);
+        dumpOutput(output);
+        return result;
     }
 
     /**
@@ -2165,7 +2197,9 @@ public class Cipher {
         }
 
         chooseFirstProvider();
-        return spi.engineDoFinal(input, 0, input.length);
+        byte[] output = spi.engineDoFinal(input, 0, input.length);
+        dumpOutput(output);
+        return output;
     }
 
     /**
@@ -2223,7 +2257,9 @@ public class Cipher {
         }
 
         chooseFirstProvider();
-        return spi.engineDoFinal(input, inputOffset, inputLen);
+        byte[] output = spi.engineDoFinal(input, inputOffset, inputLen);
+        dumpOutput(output);
+        return output;
     }
 
     /**
@@ -2297,8 +2333,10 @@ public class Cipher {
         }
 
         chooseFirstProvider();
-        return spi.engineDoFinal(input, inputOffset, inputLen,
-                                       output, 0);
+        int result = spi.engineDoFinal(input, inputOffset, inputLen,
+            output, 0);
+        dumpOutput(output);
+        return result;
     }
 
     /**
@@ -2377,8 +2415,10 @@ public class Cipher {
         }
 
         chooseFirstProvider();
-        return spi.engineDoFinal(input, inputOffset, inputLen,
-                                       output, outputOffset);
+        int result = spi.engineDoFinal(input, inputOffset, inputLen,
+            output, outputOffset);
+        dumpOutput(output);
+        return result;
     }
 
     /**
@@ -2460,7 +2500,9 @@ public class Cipher {
         }
 
         chooseFirstProvider();
-        return spi.engineDoFinal(input, output);
+        int result = spi.engineDoFinal(input, output);
+        dumpOutput(output.array());
+        return result;
     }
 
     /**
